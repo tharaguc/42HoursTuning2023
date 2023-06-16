@@ -50,34 +50,31 @@ export const getUsers = async (
 export const getUserByUserId = async (
   userId: string
 ): Promise<User | undefined> => {
-  const [rows] = await pool.query<RowDataPacket[]>(
-    `
-    SELECT 
-      user.user_id, 
-      user.user_name, 
-      user.office_id, 
-      user.user_icon_id,
-      office.office_name, 
-      file.file_name
-    FROM user 
-    LEFT JOIN office ON user.office_id = office.office_id
-    LEFT JOIN file ON user.user_icon_id = file.file_id
-    WHERE user_id = ?
-    `,
+  const [user] = await pool.query<RowDataPacket[]>(
+    "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ?",
     [userId]
   );
-  if (rows.length === 0) {
+  if (user.length === 0) {
     return;
   }
-  const row = rows[0];
+
+  const [office] = await pool.query<RowDataPacket[]>(
+    `SELECT office_name FROM office WHERE office_id = ?`,
+    [user[0].office_id]
+  );
+  const [file] = await pool.query<RowDataPacket[]>(
+    `SELECT file_name FROM file WHERE file_id = ?`,
+    [user[0].user_icon_id]
+  );
+
   return {
-    userId: row.user_id,
-    userName: row.user_name,
+    userId: user[0].user_id,
+    userName: user[0].user_name,
     userIcon: {
-      fileId: row.user_icon_id,
-      fileName: row.file_name,
+      fileId: user[0].user_icon_id,
+      fileName: file[0].file_name,
     },
-    officeName: row.office_name,
+    officeName: office[0].office_name,
   };
 };
 
@@ -238,13 +235,44 @@ export const getUsersByGoal = async (goal: string): Promise<SearchedUser[]> => {
   return getUsersByUserIds(userIds);
 };
 
+let cachedCount : number | undefined;
+let cacheExpiration = Date.now();
+
+async function getUserCount() {
+  const now = Date.now();
+
+  // Check if the cache is valid, if it is return the cached value
+  if (cachedCount !== undefined && now < cacheExpiration) {
+    return cachedCount;
+  }
+
+  // If the cache is not valid, perform the query and update the cache
+  const [[{ count }]] = await pool.query<RowDataPacket[]>(
+    "SELECT COUNT(*) AS count FROM user"
+  );
+
+  // Store the result in the cache and set the expiration to 10 minutes from now
+  cachedCount = count;
+  cacheExpiration = now + 10 * 60 * 1000; // Cache expires after 10 minutes
+
+  return count;
+}
+
 export const getUserForFilter = async (
   userId?: string
 ): Promise<UserForFilter> => {
   let userRows: RowDataPacket[];
   if (!userId) {
+    // get the count of all records in the table
+    const  count   = await getUserCount();
+
+    // generate a random offset
+    const offset = Math.floor(Math.random() * count);
+
+    // get the user record at the offset
     [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, office_id, user_icon_id FROM user ORDER BY RAND() LIMIT 1"
+      "SELECT user_id, user_name, office_id, user_icon_id FROM user LIMIT 1 OFFSET ?",
+      [offset]
     );
   } else {
     [userRows] = await pool.query<RowDataPacket[]>(
