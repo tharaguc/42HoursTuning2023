@@ -1,6 +1,7 @@
 CREATE DATABASE IF NOT EXISTS app;
 
 CREATE TABLE `user` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(50) NOT NULL,
     `user_name` VARCHAR(50) NOT NULL,
@@ -11,7 +12,8 @@ CREATE TABLE `user` (
     `office_id` VARCHAR(36) NOT NULL,
     `user_icon_id` VARCHAR(36) NOT NULL,
     `goal` VARCHAR(1024) NOT NULL,
-    PRIMARY KEY (`user_id`)
+    PRIMARY KEY (`id`)
+    UNIQUE KEY (`user_id`)
 );
 
 CREATE TABLE `session` (
