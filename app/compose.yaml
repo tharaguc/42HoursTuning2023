@@ -5,6 +5,7 @@ services:
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ../.da/tls:/etc/nginx/tls
+      - ./nginx/cache:/data/nginx/cache
     ports:
       - 443:443
   backend:
