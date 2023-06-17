@@ -281,16 +281,17 @@ export const getUserForFilter = async (
 
     // get the user record at the offset
     [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, office_id, user_icon_id FROM user where id = ? LIMIT 1 ",
+      "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE id = ? LIMIT 1 ",
       [offset]
     );
   } else {
     [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ?",
+      "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ? LIMIT 1",
       [userId]
     );
   }
   const user = userRows[0];
+  console.log(user);
 
   const [officeNameRow] = await pool.query<RowDataPacket[]>(
     `SELECT office_name FROM office WHERE office_id = ?`,
@@ -306,13 +307,13 @@ export const getUserForFilter = async (
   );
   const [skillNameRows] = await pool.query<RowDataPacket[]>(
     `SELECT skill_name FROM skill WHERE skill_id IN (SELECT skill_id FROM skill_member WHERE user_id = ?)`,
-    [user.user_id]
+    [user?.user_id]
   );
 
-  user.office_name = officeNameRow[0].office_name;
-  user.file_name = fileNameRow[0].file_name;
-  user.department_name = departmentNameRow[0].department_name;
-  user.skill_names = skillNameRows.map((row) => row.skill_name);
+  user.office_name = officeNameRow[0]?.office_name;
+  user.file_name = fileNameRow[0]?.file_name;
+  user.department_name = departmentNameRow[0]?.department_name;
+  user.skill_names = skillNameRows?.map((row) => row.skill_name);
 
   return convertToUserForFilter(user);
 };
