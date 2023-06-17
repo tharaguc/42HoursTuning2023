@@ -135,7 +135,7 @@ usersRouter.get(
       const duplicateUsers = await getUsersByKeyword(
         keyword,
         targets as Target[]
-      );
+        );
       if (duplicateUsers.length === 0) {
         res.json([]);
         console.log("no user found");
@@ -152,29 +152,44 @@ usersRouter.get(
       });
 
       // 重複ユーザーを削除
-      let uniqueUsers: SearchedUser[] = [];
-      duplicateUsers.forEach((user) => {
-        if (
-          !uniqueUsers.some((uniqueUser) => uniqueUser.userId === user.userId)
-        ) {
-          uniqueUsers = uniqueUsers.concat(user);
-        }
-      });
+      const uniqueUsers: SearchedUser[] = duplicateUsers.filter((user, index, self) => index === self.findIndex((u) => u?.userId === user?.userId));
+      // let uniqueUsers: SearchedUser[] = [];
+      // duplicateUsers.forEach((user) => {
+      //   if (
+      //     !uniqueUsers.some((uniqueUser) => uniqueUser.userId === user.userId)
+      //   ) {
+      //     uniqueUsers = uniqueUsers.concat(user);
+      //   }
+      // });
+
 
       // User型に変換
-      const users: User[] = uniqueUsers
-        .slice(offset, offset + limit)
-        .map((user) => {
-          return {
-            userId: user.userId,
-            userName: user.userName,
-            userIcon: {
-              fileId: user.userIcon.fileId,
-              fileName: user.userIcon.fileName,
-            },
-            officeName: user.officeName,
-          };
+      const users: User[] = [];
+      for (let i = offset; i < offset + limit && i < uniqueUsers.length; i++) {
+        const user = uniqueUsers[i];
+        users.push({
+          userId: user.userId,
+          userName: user.userName,
+          userIcon: {
+            fileId: user.userIcon.fileId,
+            fileName: user.userIcon.fileName,
+          },
+          officeName: user.officeName,
         });
+      }
+      // const users: User[] = uniqueUsers
+      //   .slice(offset, offset + limit)
+      //   .map((user) => {
+      //     return {
+      //       userId: user.userId,
+      //       userName: user.userName,
+      //       userIcon: {
+      //         fileId: user.userIcon.fileId,
+      //         fileName: user.userIcon.fileName,
+      //       },
+      //       officeName: user.officeName,
+      //     };
+      //   });
       res.json(users);
       console.log(`successfully searched ${users.length} users`);
     } catch (e) {
