@@ -17,7 +17,7 @@ export const getUsersByKeyword = async (
   let users: SearchedUser[] = [];
   for (const target of targets) {
     const oldLen = users.length;
-    console.time(`getUsersBy${target}`);
+    // console.time(`getUsersBy${target}`);
     switch (target) {
       case "userName":
         users = users.concat(await getUsersByUserName(keyword));
@@ -44,7 +44,7 @@ export const getUsersByKeyword = async (
         users = users.concat(await getUsersByGoal(keyword));
         break;
     }
-    console.timeEnd(`getUsersBy${target}`);
+    // console.timeEnd(`getUsersBy${target}`);
     console.log(`${users.length - oldLen} users found by ${target}`);
   }
   return users;
