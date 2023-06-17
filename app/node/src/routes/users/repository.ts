@@ -269,7 +269,7 @@ export const getUserForFilter = async (
 
     // get the user record at the offset
     [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, office_id, user_icon_id FROM user LIMIT 1 OFFSET ?",
+      "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE id = ? LIMIT 1",
       [offset]
     );
   } else {
