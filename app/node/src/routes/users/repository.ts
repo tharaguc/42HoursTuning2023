@@ -256,50 +256,98 @@ async function getUserCount() {
   return count;
 }
 
+// export const getUserForFilter = async (
+//   userId?: string
+// ): Promise<UserForFilter> => {
+//   let userRows: RowDataPacket[];
+//   if (!userId) {
+//     // get the count of all records in the table
+//     const  count   = await getUserCount();
+
+//     // generate a random offset
+//     const offset = Math.floor(Math.random() * count);
+
+//     // get the user record at the offset
+//     [userRows] = await pool.query<RowDataPacket[]>(
+//       "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE id = ? LIMIT 1",
+//       [offset]
+//     );
+//   } else {
+//     [userRows] = await pool.query<RowDataPacket[]>(
+//       "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ?",
+//       [userId]
+//     );
+//   }
+//   const user = userRows[0];
+
+//   const [officeNameRow] = await pool.query<RowDataPacket[]>(
+//     `SELECT office_name FROM office WHERE office_id = ?`,
+//     [user.office_id]
+//   );
+//   const [fileNameRow] = await pool.query<RowDataPacket[]>(
+//     `SELECT file_name FROM file WHERE file_id = ?`,
+//     [user.user_icon_id]
+//   );
+//   const [departmentNameRow] = await pool.query<RowDataPacket[]>(
+//     `SELECT department_name FROM department WHERE department_id = (SELECT department_id FROM department_role_member WHERE user_id = ? AND belong = true)`,
+//     [user.user_id]
+//   );
+//   const [skillNameRows] = await pool.query<RowDataPacket[]>(
+//     `SELECT skill_name FROM skill WHERE skill_id IN (SELECT skill_id FROM skill_member WHERE user_id = ?)`,
+//     [user.user_id]
+//   );
+
+//   user.office_name = officeNameRow[0].office_name;
+//   user.file_name = fileNameRow[0].file_name;
+//   user.department_name = departmentNameRow[0].department_name;
+//   user.skill_names = skillNameRows.map((row) => row.skill_name);
+
+//   return convertToUserForFilter(user);
+// };
+
 export const getUserForFilter = async (
   userId?: string
 ): Promise<UserForFilter> => {
   let userRows: RowDataPacket[];
   if (!userId) {
     // get the count of all records in the table
-    const  count   = await getUserCount();
+    const count = await getUserCount();
 
     // generate a random offset
     const offset = Math.floor(Math.random() * count);
 
     // get the user record at the offset
     [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE id = ? LIMIT 1",
+      `SELECT u.user_id, u.user_name, o.office_name, f.file_name, d.department_name
+      FROM user u 
+      JOIN office o ON u.office_id = o.office_id 
+      JOIN file f ON u.user_icon_id = f.file_id 
+      JOIN department_role_member drm ON u.user_id = drm.user_id 
+      JOIN department d ON drm.department_id = d.department_id 
+      WHERE u.id = ? AND drm.belong = true LIMIT 1`,
       [offset]
     );
   } else {
     [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ?",
+      `SELECT u.user_id, u.user_name, o.office_name, f.file_name, d.department_name
+      FROM user u 
+      JOIN office o ON u.office_id = o.office_id 
+      JOIN file f ON u.user_icon_id = f.file_id 
+      JOIN department_role_member drm ON u.user_id = drm.user_id 
+      JOIN department d ON drm.department_id = d.department_id 
+      WHERE u.user_id = ? AND drm.belong = true`,
       [userId]
     );
   }
+  
   const user = userRows[0];
-
-  const [officeNameRow] = await pool.query<RowDataPacket[]>(
-    `SELECT office_name FROM office WHERE office_id = ?`,
-    [user.office_id]
-  );
-  const [fileNameRow] = await pool.query<RowDataPacket[]>(
-    `SELECT file_name FROM file WHERE file_id = ?`,
-    [user.user_icon_id]
-  );
-  const [departmentNameRow] = await pool.query<RowDataPacket[]>(
-    `SELECT department_name FROM department WHERE department_id = (SELECT department_id FROM department_role_member WHERE user_id = ? AND belong = true)`,
-    [user.user_id]
-  );
+  
+  // Fetch skill names with a separate query
   const [skillNameRows] = await pool.query<RowDataPacket[]>(
     `SELECT skill_name FROM skill WHERE skill_id IN (SELECT skill_id FROM skill_member WHERE user_id = ?)`,
     [user.user_id]
   );
 
-  user.office_name = officeNameRow[0].office_name;
-  user.file_name = fileNameRow[0].file_name;
-  user.department_name = departmentNameRow[0].department_name;
   user.skill_names = skillNameRows.map((row) => row.skill_name);
 
   return convertToUserForFilter(user);

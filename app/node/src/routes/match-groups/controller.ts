@@ -2,10 +2,7 @@ import express from "express";
 import { MatchGroupConfig } from "../../model/types";
 import { checkSkillsRegistered, createMatchGroup } from "./usecase";
 import { getUserByUserId } from "../users/repository";
-import {
-  getMatchGroupIdsByUserId,
-  getMatchGroupsByMatchGroupIds,
-} from "./repository";
+import { getMatchGroupDetailsByUserId } from "./repository";
 
 export const matchGroupRouter = express.Router();
 
@@ -240,15 +237,15 @@ matchGroupRouter.get(
         offset = 0;
       }
 
-      const matchGroupIds = await getMatchGroupIdsByUserId(user.userId);
-      console.log(`user participated in ${matchGroupIds.length} match groups`);
-      if (matchGroupIds.length === 0) {
-        res.json([]);
-        return;
-      }
+      // const matchGroupIds = await getMatchGroupIdsByUserId(user.userId);
+      // console.log(`user participated in ${matchGroupIds.length} match groups`);
+      // if (matchGroupIds.length === 0) {
+      //   res.json([]);
+      //   return;
+      // }
 
-      const matchGroups = await getMatchGroupsByMatchGroupIds(
-        matchGroupIds,
+      const matchGroups = await getMatchGroupDetailsByUserId(
+        user.userId,
         status
       );
       if (matchGroups.length === 0) {
