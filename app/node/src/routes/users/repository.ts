@@ -176,7 +176,8 @@ export const getUsersByRoleName = async (
   roleName: string
 ): Promise<SearchedUser[]> => {
   const [roleIdRows] = await pool.query<RowDataPacket[]>(
-    `SELECT role_id FROM role WHERE role_name LIKE ? AND active = true`,
+    // `SELECT role_id FROM role WHERE role_name LIKE ? AND active = true`,
+    `SELECT role_id FROM role WHERE MATCH(role_name) AGAINST(? IN BOOLEAN MODE) AND active = true`,
     [`%${roleName}%`]
   );
   const roleIds: string[] = roleIdRows.map((row) => row.role_id);
@@ -237,7 +238,8 @@ export const getUsersBySkillName = async (
 
 export const getUsersByGoal = async (goal: string): Promise<SearchedUser[]> => {
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT user_id FROM user WHERE goal LIKE ?`,
+    // `SELECT user_id FROM user WHERE goal LIKE ?`,
+    `SELECT user_id FROM user WHERE MATCH(goal) AGAINST(? IN BOOLEAN MODE)`,
     [`%${goal}%`]
   );
   const userIds: string[] = rows.map((row) => row.user_id);
