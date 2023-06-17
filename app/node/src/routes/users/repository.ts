@@ -90,7 +90,15 @@ export const getUsersByUserIds = async (
   const usersPromises = chunks.map((chunk) => {
     const placeHolders = chunk.map((_) => "?").join(",");
     const query = `
-      SELECT user.user_id, user.user_name, user.kana, user.entry_date, office.office_name, file.file_name
+      SELECT
+        user.user_id,
+        user.user_name,
+        user.kana,
+        user.entry_date,
+        user.office_id,
+        user.user_icon_id,
+        office.office_name,
+        file.file_name
       FROM user
       LEFT JOIN office ON user.office_id = office.office_id
       LEFT JOIN file ON user.user_icon_id = file.file_id
