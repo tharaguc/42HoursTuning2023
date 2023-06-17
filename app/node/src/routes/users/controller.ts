@@ -29,7 +29,7 @@ usersRouter.get(
         return;
       }
       const path = userIcon.path;
-      const resized = await sharp(path).resize(500, 500).toBuffer();
+      const resized = await sharp(path).resize(500, 500).jpeg({quality: 10}).toBuffer();
       const data = resized.toString('base64');
       res.status(200).json({
         fileName: userIcon.fileName,
