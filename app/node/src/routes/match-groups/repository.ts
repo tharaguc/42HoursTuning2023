@@ -61,7 +61,7 @@ export const getMatchGroupDetailsByUserId = async (
   status?: string
 ): Promise<MatchGroupDetail[]> => {
   const query =
-    `SELECT mg.match_group_id, mg.match_group_name, mg.description, mg.status, mg.created_by, mg.created_at 
+    `SELECT mg.match_group_id, mg.match_group_name, mg.status, mg.created_by, mg.created_at 
     FROM match_group mg
     INNER JOIN match_group_member mgm ON mg.match_group_id = mgm.match_group_id
     WHERE mgm.user_id = ? ${status === "open" ? "AND mg.status = 'open'" : ""}`;
