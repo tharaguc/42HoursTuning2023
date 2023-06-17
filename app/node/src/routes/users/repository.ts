@@ -50,33 +50,66 @@ export const getUsers = async (
 export const getUserByUserId = async (
   userId: string
 ): Promise<User | undefined> => {
-  const [user] = await pool.query<RowDataPacket[]>(
-    "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ?",
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT
+      u.user_id AS userId,
+      u.user_name AS userName,
+      f.file_id AS fileId,
+      f.file_name AS fileName,
+      o.office_name AS officeName
+     FROM user u
+     LEFT JOIN office o ON u.office_id = o.office_id
+     LEFT JOIN file f ON u.user_icon_id = f.file_id
+     WHERE u.user_id = ?`,
     [userId]
   );
-  if (user.length === 0) {
+
+  if (rows.length === 0) {
     return;
   }
 
-  const [office] = await pool.query<RowDataPacket[]>(
-    `SELECT office_name FROM office WHERE office_id = ?`,
-    [user[0].office_id]
-  );
-  const [file] = await pool.query<RowDataPacket[]>(
-    `SELECT file_name FROM file WHERE file_id = ?`,
-    [user[0].user_icon_id]
-  );
-
+  const row = rows[0];
   return {
-    userId: user[0].user_id,
-    userName: user[0].user_name,
+    userId: row.userId,
+    userName: row.userName,
     userIcon: {
-      fileId: user[0].user_icon_id,
-      fileName: file[0].file_name,
+      fileId: row.fileId,
+      fileName: row.fileName,
     },
-    officeName: office[0].office_name,
+    officeName: row.officeName,
   };
 };
+
+// export const getUserByUserId = async (
+//   userId: string
+// ): Promise<User | undefined> => {
+//   const [user] = await pool.query<RowDataPacket[]>(
+//     "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ?",
+//     [userId]
+//   );
+//   if (user.length === 0) {
+//     return;
+//   }
+
+//   const [office] = await pool.query<RowDataPacket[]>(
+//     `SELECT office_name FROM office WHERE office_id = ?`,
+//     [user[0].office_id]
+//   );
+//   const [file] = await pool.query<RowDataPacket[]>(
+//     `SELECT file_name FROM file WHERE file_id = ?`,
+//     [user[0].user_icon_id]
+//   );
+
+//   return {
+//     userId: user[0].user_id,
+//     userName: user[0].user_name,
+//     userIcon: {
+//       fileId: user[0].user_icon_id,
+//       fileName: file[0].file_name,
+//     },
+//     officeName: office[0].office_name,
+//   };
+// };
 
 export const getUsersByUserIds = async (
   userIds: string[]
@@ -293,27 +326,27 @@ export const getUserForFilter = async (
   const user = userRows[0];
   console.log(user);
 
-  const [officeNameRow] = await pool.query<RowDataPacket[]>(
-    `SELECT office_name FROM office WHERE office_id = ?`,
-    [user.office_id]
-  );
-  const [fileNameRow] = await pool.query<RowDataPacket[]>(
-    `SELECT file_name FROM file WHERE file_id = ?`,
-    [user.user_icon_id]
-  );
-  const [departmentNameRow] = await pool.query<RowDataPacket[]>(
-    `SELECT department_name FROM department WHERE department_id = (SELECT department_id FROM department_role_member WHERE user_id = ? AND belong = true)`,
+  const [resultRows] = await pool.query<RowDataPacket[]>(
+    `SELECT
+      o.office_name,
+      f.file_name,
+      d.department_name,
+      s.skill_name
+    FROM user u
+    LEFT JOIN office o ON u.office_id = o.office_id
+    LEFT JOIN file f ON u.user_icon_id = f.file_id
+    LEFT JOIN department_role_member drm ON u.user_id = drm.user_id AND drm.belong = true
+    LEFT JOIN department d ON drm.department_id = d.department_id
+    LEFT JOIN skill_member sm ON u.user_id = sm.user_id
+    LEFT JOIN skill s ON sm.skill_id = s.skill_id
+    WHERE u.user_id = ?`,
     [user.user_id]
   );
-  const [skillNameRows] = await pool.query<RowDataPacket[]>(
-    `SELECT skill_name FROM skill WHERE skill_id IN (SELECT skill_id FROM skill_member WHERE user_id = ?)`,
-    [user?.user_id]
-  );
 
-  user.office_name = officeNameRow[0]?.office_name;
-  user.file_name = fileNameRow[0]?.file_name;
-  user.department_name = departmentNameRow[0]?.department_name;
-  user.skill_names = skillNameRows?.map((row) => row.skill_name);
+  user.office_name = resultRows[0].office_name;
+  user.file_name = resultRows[0].file_name;
+  user.department_name = resultRows[0].department_name;
+  user.skill_names = resultRows.map((row) => row.skill_name);
 
   return convertToUserForFilter(user);
 };
