@@ -81,29 +81,31 @@ export const getUserByUserId = async (
 export const getUsersByUserIds = async (
   userIds: string[]
 ): Promise<SearchedUser[]> => {
-  let users: SearchedUser[] = [];
-  for (const userId of userIds) {
-    const [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, kana, entry_date, office_id, user_icon_id FROM user WHERE user_id = ?",
-      [userId]
-    );
-    if (userRows.length === 0) {
-      continue;
-    }
-
-    const [officeRows] = await pool.query<RowDataPacket[]>(
-      `SELECT office_name FROM office WHERE office_id = ?`,
-      [userRows[0].office_id]
-    );
-    const [fileRows] = await pool.query<RowDataPacket[]>(
-      `SELECT file_name FROM file WHERE file_id = ?`,
-      [userRows[0].user_icon_id]
-    );
-    userRows[0].office_name = officeRows[0].office_name;
-    userRows[0].file_name = fileRows[0].file_name;
-
-    users = users.concat(convertToSearchedUser(userRows));
+  const chunkSize = 1000;
+  const chunks = [];
+  for (let i = 0; i < userIds.length; i += chunkSize) {
+    chunks.push(userIds.slice(i, i + chunkSize));
   }
+
+  const usersPromises = chunks.map((chunk) => {
+    const placeHolders = chunk.map((_) => "?").join(",");
+    const query = `
+      SELECT user.user_id, user.user_name, user.kana, user.entry_date, office.office_name, file.file_name
+      FROM user
+      LEFT JOIN office ON user.office_id = office.office_id
+      LEFT JOIN file ON user.user_icon_id = file.file_id
+      WHERE user.user_id IN (${placeHolders})
+    `;
+    return pool.query<RowDataPacket[]>(query, chunk);
+  });
+
+  const results = await Promise.all(usersPromises);
+
+  let users: SearchedUser[] = [];
+  results.forEach(([rows]) => {
+    users = users.concat(convertToSearchedUser(rows));
+  });
+
   return users;
 };
 
@@ -235,7 +237,7 @@ export const getUsersByGoal = async (goal: string): Promise<SearchedUser[]> => {
   return getUsersByUserIds(userIds);
 };
 
-let cachedCount : number | undefined;
+let cachedCount: number | undefined;
 let cacheExpiration = Date.now();
 
 async function getUserCount() {
@@ -264,7 +266,7 @@ export const getUserForFilter = async (
   let userRows: RowDataPacket[];
   if (!userId) {
     // get the count of all records in the table
-    const  count   = await getUserCount();
+    const count = await getUserCount();
 
     // generate a random offset
     const offset = Math.floor(Math.random() * count);
