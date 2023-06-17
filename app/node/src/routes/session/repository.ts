@@ -6,18 +6,18 @@ import { convertDateToString } from "../../model/utils";
 export const getSessionByUserId = async (
   userId: string
 ): Promise<Session | undefined> => {
-  const [session] = await pool.query<RowDataPacket[]>(
-    "SELECT * FROM session WHERE linked_user_id = ?",
+  const [rows] = await pool.query<RowDataPacket[]>(
+    "SELECT session_id, linked_user_id, created_at FROM session WHERE linked_user_id = ? LIMIT 1",
     [userId]
   );
-  if (session.length === 0) {
+  if (rows.length === 0) {
     return;
   }
 
   return {
-    sessionId: session[0].session_id,
-    userId: session[0].linked_user_id,
-    createdAt: convertDateToString(session[0].created_at),
+    sessionId: rows[0].session_id,
+    userId: rows[0].linked_user_id,
+    createdAt: convertDateToString(rows[0].created_at),
   };
 };
 
