@@ -16,7 +16,7 @@ export const getUsersByKeyword = async (
 ): Promise<SearchedUser[]> => {
   let users: SearchedUser[] = [];
   for (const target of targets) {
-    const oldLen = users.length;
+    // const oldLen = users.length;
     // console.time(`getUsersBy${target}`);
     switch (target) {
       case "userName":
@@ -45,7 +45,7 @@ export const getUsersByKeyword = async (
         break;
     }
     // console.timeEnd(`getUsersBy${target}`);
-    console.log(`${users.length - oldLen} users found by ${target}`);
+    //console.log(`${users.length - oldLen} users found by ${target}`);
   }
   return users;
 };
