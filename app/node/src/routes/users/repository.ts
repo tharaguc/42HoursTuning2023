@@ -5,6 +5,7 @@ import {
   convertToSearchedUser,
   convertToUserForFilter,
   convertToUsers,
+  convertUsersForFilterToUsers,
 } from "../../model/utils";
 
 export const getUserIdByMailAndPassword = async (
@@ -301,37 +302,48 @@ async function getUserCount() {
   return count;
 }
 
-export const getUserForFilter = async (
-  userId?: string
-): Promise<UserForFilter> => {
-  let userRows: RowDataPacket[];
+export const getUserForFilter = async ({
+  userId,
+  numOfUsers = 1,
+}: {
+  userId?: string;
+  numOfUsers?: number;
+} = {}): Promise<UserForFilter[]> => {
+  let userRows: RowDataPacket[] = [];
+  const count = await getUserCount();
+  let placeHolders;
+  const offsets = [];
   if (!userId) {
-    // get the count of all records in the table
-    const count = await getUserCount();
-
-    // generate a random offset
     const offset = Math.floor(Math.random() * count);
 
-    // get the user record at the offset
     [userRows] = await pool.query<RowDataPacket[]>(
       "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE id = ? LIMIT 1 ",
       [offset]
     );
-  } else {
+  } else if (numOfUsers) {
+    //ofsetを複数生成してnumOfUsersの数だけユーザーを取得する
+    for (let i = 0; i < numOfUsers; i++) {
+      offsets.push(Math.floor(Math.random() * count));
+    }
+
+    placeHolders = offsets.map((_) => "?").join(",");
     [userRows] = await pool.query<RowDataPacket[]>(
-      "SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE user_id = ? LIMIT 1",
-      [userId]
+      `SELECT user_id, user_name, office_id, user_icon_id FROM user WHERE id IN (${placeHolders})`,
+      offsets
     );
   }
-  const user = userRows[0];
-  console.log(user);
+
+  const users: RowDataPacket[] = [];
+  for (const userRow of userRows) {
+    users.push(userRow);
+  }
 
   const [resultRows] = await pool.query<RowDataPacket[]>(
     `SELECT
-      o.office_name,
-      f.file_name,
-      d.department_name,
-      s.skill_name
+    o.office_name,
+    f.file_name,
+    d.department_name,
+    s.skill_name
     FROM user u
     LEFT JOIN office o ON u.office_id = o.office_id
     LEFT JOIN file f ON u.user_icon_id = f.file_id
@@ -339,14 +351,21 @@ export const getUserForFilter = async (
     LEFT JOIN department d ON drm.department_id = d.department_id
     LEFT JOIN skill_member sm ON u.user_id = sm.user_id
     LEFT JOIN skill s ON sm.skill_id = s.skill_id
-    WHERE u.user_id = ?`,
-    [user.user_id]
+    IN (${placeHolders})`,
+    offsets
   );
 
-  user.office_name = resultRows[0].office_name;
-  user.file_name = resultRows[0].file_name;
-  user.department_name = resultRows[0].department_name;
-  user.skill_names = resultRows.map((row) => row.skill_name);
+  for (let i = 0; i < resultRows.length; ++i) {
+    users[i].office_name = resultRows[i].office_name;
+    users[i].file_name = resultRows[i].file_name;
+    users[i].department_name = resultRows[i].department_name;
+    users[i].skill_names = resultRows.map((row) => row.skill_name);
+  }
 
-  return convertToUserForFilter(user);
+  const res: UserForFilter[] = [];
+  for (const userRow of users) {
+    res.push(convertToUserForFilter(userRow));
+  }
+
+  return res;
 };

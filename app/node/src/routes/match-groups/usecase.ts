@@ -28,21 +28,21 @@ export const createMatchGroup = async (
   matchGroupConfig: MatchGroupConfig,
   timeout?: number
 ): Promise<MatchGroupDetail | undefined> => {
-  const owner = await getUserForFilter(matchGroupConfig.ownerId);
-  let members: UserForFilter[] = [owner];
+  const owner = await getUserForFilter({userId: matchGroupConfig.ownerId });
+  let members: UserForFilter[] = [owner[0]];
   const startTime = Date.now();
-  while (members.length < matchGroupConfig.numOfMembers) {
     // デフォルトは50秒でタイムアウト
     if (Date.now() - startTime > (!timeout ? 50000 : timeout)) {
       console.error("not all members found before timeout");
       return;
     }
-    const candidate = await getUserForFilter();
+  const candidates = await getUserForFilter();
+  for (const candidate of candidates) {
     if (
       matchGroupConfig.departmentFilter !== "none" &&
       !isPassedDepartmentFilter(
         matchGroupConfig.departmentFilter,
-        owner.departmentName,
+        owner[0].departmentName,
         candidate.departmentName
       )
     ) {
@@ -52,7 +52,7 @@ export const createMatchGroup = async (
       matchGroupConfig.officeFilter !== "none" &&
       !isPassedOfficeFilter(
         matchGroupConfig.officeFilter,
-        owner.officeName,
+        owner[0].officeName,
         candidate.officeName
       )
     ) {
