@@ -46,7 +46,7 @@ export const createMatchGroup = async (
         candidate.departmentName
       )
     ) {
-      console.log(`${candidate.userId} is not passed department filter`);
+      //console.log(`${candidate.userId} is not passed department filter`);
       continue;
     } else if (
       matchGroupConfig.officeFilter !== "none" &&
@@ -56,7 +56,7 @@ export const createMatchGroup = async (
         candidate.officeName
       )
     ) {
-      console.log(`${candidate.userId} is not passed office filter`);
+      //console.log(`${candidate.userId} is not passed office filter`);
       continue;
     } else if (
       matchGroupConfig.skillFilter.length > 0 &&
@@ -64,20 +64,20 @@ export const createMatchGroup = async (
         candidate.skillNames.includes(skill)
       )
     ) {
-      console.log(`${candidate.userId} is not passed skill filter`);
+      //console.log(`${candidate.userId} is not passed skill filter`);
       continue;
     } else if (
       matchGroupConfig.neverMatchedFilter &&
       !(await isPassedMatchFilter(matchGroupConfig.ownerId, candidate.userId))
     ) {
-      console.log(`${candidate.userId} is not passed never matched filter`);
+      //console.log(`${candidate.userId} is not passed never matched filter`);
       continue;
     } else if (members.some((member) => member.userId === candidate.userId)) {
-      console.log(`${candidate.userId} is already added to members`);
+      //console.log(`${candidate.userId} is already added to members`);
       continue;
     }
     members = members.concat(candidate);
-    console.log(`${candidate.userId} is added to members`);
+    //console.log(`${candidate.userId} is added to members`);
   }
 
   const matchGroupId = uuidv4();

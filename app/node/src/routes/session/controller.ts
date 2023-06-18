@@ -53,7 +53,7 @@ sessionRouter.post(
           path: "/",
         });
         res.json(session);
-        console.log("user already logged in");
+        //console.log("user already logged in");
         return;
       }
 
@@ -73,7 +73,7 @@ sessionRouter.post(
         path: "/",
       });
       res.status(201).json(createdSession);
-      console.log("successfully logged in");
+      //console.log("successfully logged in");
     } catch (e) {
       next(e);
     }
@@ -94,7 +94,7 @@ sessionRouter.delete(
       await deleteSessions(userId);
       res.clearCookie("SESSION_ID", { httpOnly: true, path: "/" });
       res.status(204).send();
-      console.log("successfully logged out");
+      //console.log("successfully logged out");
     } catch (e) {
       next(e);
     }

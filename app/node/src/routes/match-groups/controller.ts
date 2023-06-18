@@ -31,7 +31,7 @@ matchGroupRouter.post(
       if (!(await isReqBodyValueCorrect(reqBody, res))) {
         return;
       }
-      console.log("specified condition is valid");
+      // console.log("specified condition is valid");
 
       const matchGroupDetail = await createMatchGroup(reqBody);
       if (!matchGroupDetail) {
@@ -42,7 +42,7 @@ matchGroupRouter.post(
         return;
       }
       res.status(201).json(matchGroupDetail);
-      console.log("successfully created a new match group");
+      // console.log("successfully created a new match group");
     } catch (e) {
       next(e);
     }
@@ -250,7 +250,7 @@ matchGroupRouter.get(
       );
       if (matchGroups.length === 0) {
         res.json([]);
-        console.log("no valid match groups found");
+        // console.log("no valid match groups found");
         return;
       }
 
@@ -266,7 +266,7 @@ matchGroupRouter.get(
       });
 
       res.json(matchGroups.slice(offset, offset + limit));
-      console.log("successfully found match groups");
+      // console.log("successfully found match groups");
     } catch (e) {
       next(e);
     }

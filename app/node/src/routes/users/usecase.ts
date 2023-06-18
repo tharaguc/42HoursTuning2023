@@ -45,7 +45,7 @@ export const getUsersByKeyword = async (
         break;
     }
     // console.timeEnd(`getUsersBy${target}`);
-    console.log(`${users.length - oldLen} users found by ${target}`);
+    //console.log(`${users.length - oldLen} users found by ${target}`);
   }
   return users;
 };

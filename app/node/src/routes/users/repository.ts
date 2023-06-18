@@ -324,7 +324,7 @@ export const getUserForFilter = async (
     );
   }
   const user = userRows[0];
-  console.log(user);
+  // console.log(user);
 
   const [resultRows] = await pool.query<RowDataPacket[]>(
     `SELECT
